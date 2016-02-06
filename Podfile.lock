@@ -1,0 +1,40 @@
+PODS:
+  - ArrayDiff (1.1.3)
+  - AsyncDisplayKit (1.9.6):
+    - AsyncDisplayKit/ASDealloc2MainObject (= 1.9.6)
+  - AsyncDisplayKit/ASDealloc2MainObject (1.9.6)
+  - ReactiveCocoa (4.0.1):
+    - ReactiveCocoa/UI (= 4.0.1)
+    - Result (~> 1.0.2)
+  - ReactiveCocoa/Core (4.0.1):
+    - ReactiveCocoa/no-arc
+    - Result (~> 1.0.2)
+  - ReactiveCocoa/no-arc (4.0.1):
+    - Result (~> 1.0.2)
+  - ReactiveCocoa/UI (4.0.1):
+    - ReactiveCocoa/Core
+    - Result (~> 1.0.2)
+  - Result (1.0.2)
+
+DEPENDENCIES:
+  - ArrayDiff
+  - AsyncDisplayKit (from `https://github.com/facebook/AsyncDisplayKit`, branch `master`)
+  - ReactiveCocoa (~> 4.0.1)
+
+EXTERNAL SOURCES:
+  AsyncDisplayKit:
+    :branch: master
+    :git: https://github.com/facebook/AsyncDisplayKit
+
+CHECKOUT OPTIONS:
+  AsyncDisplayKit:
+    :commit: 9e87813425959d9c0f6e7c7b54de787d6c6c7854
+    :git: https://github.com/facebook/AsyncDisplayKit
+
+SPEC CHECKSUMS:
+  ArrayDiff: 2925c7fbceb5928ab237002c73745c8973c8e948
+  AsyncDisplayKit: 090a94923ae90f835459cce026217ca41ffe8fae
+  ReactiveCocoa: f7011630aee4deeb16352fcb1b50d6bde9db4f90
+  Result: dd3dd71af3fa2e262f1a999e14fba2c25ec14f16
+
+COCOAPODS: 0.39.0
