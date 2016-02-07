@@ -33,7 +33,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     private let nodeCache = NSMapTable.strongToWeakObjectsMapTable()
     private var tableData: [BasicSection<ASCellNode>] = []
     private var hasTableDataBeenQueried = false
-    private let tableDataLock = NSLock()
+    private let tableDataLock = Lock()
     init(store: TodoStore) {
         self.store = store
         queue = dispatch_queue_create("TodoViewController Queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0))
@@ -106,28 +106,26 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     private func setState(newState: State) {
         state = newState
 
-        tableDataLock.lock()
-        let oldData = tableData
-        tableDataLock.unlock()
+		let oldData = tableDataLock.withCriticalScope {
+			tableData
+		}
         let newData = renderTableData(nodeCache)
 
         let diff = oldData.diffNested(newData)
         if diff.isEmpty { return }
 
-        tableDataLock.lock()
-        if !hasTableDataBeenQueried {
-            self.tableData = newData
-            tableDataLock.unlock()
-            return
-        }
-        tableDataLock.unlock()
+		let hasBeenQueried = tableDataLock.withCriticalScope { () -> Bool in
+			self.tableData = newData
+			return hasTableDataBeenQueried
+		}
+		if !hasBeenQueried { return }
 
         dispatch_async(dispatch_get_main_queue()) {
             let tableView = self.tableNode.view
             tableView.beginUpdates()
-            self.tableDataLock.lock()
-            self.tableData = newData
-            self.tableDataLock.unlock()
+			self.tableDataLock.withCriticalScope {
+				self.tableData = newData
+			}
             diff.applyToTableView(tableView, rowAnimation: .Automatic)
             tableView.endUpdates()
         }

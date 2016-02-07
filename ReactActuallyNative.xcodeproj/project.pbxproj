@@ -13,6 +13,7 @@
 		CC23B9E71C668434000ED09F /* TodoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E61C668434000ED09F /* TodoStore.swift */; };
 		CC23B9E91C66BAD8000ED09F /* TableComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E81C66BAD8000ED09F /* TableComponent.swift */; };
 		CC23B9EB1C66C5C0000ED09F /* ManagedObjectContextChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9EA1C66C5C0000ED09F /* ManagedObjectContextChange.swift */; };
+		CCD8525F1C67E89800FB2AD0 /* Lock.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCD8525E1C67E89800FB2AD0 /* Lock.swift */; };
 		CCF7561F1C665F33009C57D1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF7561E1C665F33009C57D1 /* AppDelegate.swift */; };
 		CCF756211C665F33009C57D1 /* TodoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756201C665F33009C57D1 /* TodoViewController.swift */; };
 		CCF756261C665F33009C57D1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CCF756251C665F33009C57D1 /* Assets.xcassets */; };
@@ -31,6 +32,7 @@
 		CC23B9E61C668434000ED09F /* TodoStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoStore.swift; sourceTree = "<group>"; };
 		CC23B9E81C66BAD8000ED09F /* TableComponent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TableComponent.swift; sourceTree = "<group>"; };
 		CC23B9EA1C66C5C0000ED09F /* ManagedObjectContextChange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ManagedObjectContextChange.swift; sourceTree = "<group>"; };
+		CCD8525E1C67E89800FB2AD0 /* Lock.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Lock.swift; sourceTree = "<group>"; };
 		CCF7561B1C665F33009C57D1 /* ReactActuallyNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReactActuallyNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCF7561E1C665F33009C57D1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CCF756201C665F33009C57D1 /* TodoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoViewController.swift; sourceTree = "<group>"; };
@@ -101,6 +103,7 @@
 				CC23B9E61C668434000ED09F /* TodoStore.swift */,
 				CCF756321C666056009C57D1 /* CoreDataStore.swift */,
 				CCF756201C665F33009C57D1 /* TodoViewController.swift */,
+				CCD8525E1C67E89800FB2AD0 /* Lock.swift */,
 				CCF756391C666776009C57D1 /* TodoItem.swift */,
 				CCF756371C666736009C57D1 /* TodoNode.swift */,
 				CC23B9E81C66BAD8000ED09F /* TableComponent.swift */,
@@ -243,6 +246,7 @@
 				CCF756331C666056009C57D1 /* CoreDataStore.swift in Sources */,
 				CC23B9E51C667192000ED09F /* TodoActions.swift in Sources */,
 				CCF7561F1C665F33009C57D1 /* AppDelegate.swift in Sources */,
+				CCD8525F1C67E89800FB2AD0 /* Lock.swift in Sources */,
 				CCF756381C666736009C57D1 /* TodoNode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
