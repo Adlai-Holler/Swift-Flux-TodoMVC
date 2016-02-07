@@ -103,6 +103,23 @@ final class TodoStore {
                     self.changeObserver.sendNext(.Change(change))
                 }
             }
+        case .DeleteAllCompleted:
+            managedObjectContext.performBlock {
+                let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
+                    for item in self.getAll() where item.completed {
+                        guard let object = try? self.managedObjectContext.existingObjectWithID(item.objectID!) else { continue }
+                        if object.objectID == self.editingItemID {
+                            /// There's currently a bug where the editing view will refuse to resign
+                            /// and we'll crash if we try to delete it.
+                            continue
+                        }
+                        self.managedObjectContext.deleteObject(object)
+                    }
+                }
+                if let change = changeOrNil {
+                    self.changeObserver.sendNext(.Change(change))
+                }
+            }
         }
     }
 

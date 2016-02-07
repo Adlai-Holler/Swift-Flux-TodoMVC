@@ -35,6 +35,7 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         addSubnode(textNode)
         addSubnode(imageNode)
 
+        imageNode.backgroundColor = UIColor.whiteColor()
         setState(state)
         imageNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
     }

@@ -15,6 +15,7 @@ enum TodoAction {
     case UpdateText(NSManagedObjectID, String)
     case Delete(NSManagedObjectID)
     case SetCompleted(NSManagedObjectID, Bool)
+    case DeleteAllCompleted
 
     func dispatch() {
         dispatcher.dispatch(self)

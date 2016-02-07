@@ -38,6 +38,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         super.init(node: ASTableNode(style: .Plain))
         title = "Todo MVC"
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "didTapAdd")
+        navigationItem.leftBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Trash, target: self, action: "didTapClear")
         tableNode.dataSource = self
         tableNode.delegate = self
 
@@ -89,6 +90,10 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     @objc private func didTapAdd() {
         TodoAction.Create("Hello!").dispatch()
+    }
+
+    @objc private func didTapClear() {
+        TodoAction.DeleteAllCompleted.dispatch()
     }
 
     // MARK: State Updating
