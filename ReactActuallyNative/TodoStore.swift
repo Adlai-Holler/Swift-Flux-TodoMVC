@@ -68,6 +68,35 @@ final class TodoStore {
                     var item = TodoItem(object: object)
                     item.title = newTitle
                     item.apply(object)
+                    if objectID == self.editingItemID {
+                        self.editingItemID = nil
+                    }
+                }
+                if let change = changeOrNil {
+                    self.changeObserver.sendNext(.Change(change))
+                }
+            }
+        case let .Delete(objectID):
+            managedObjectContext.performBlock {
+                let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
+                    if self.editingItemID == objectID {
+                        self.editingItemID = nil
+                    }
+                    guard let object = try? self.managedObjectContext.existingObjectWithID(objectID) else { return }
+
+                    self.managedObjectContext.deleteObject(object)
+                }
+                if let change = changeOrNil {
+                    self.changeObserver.sendNext(.Change(change))
+                }
+            }
+        case let .SetCompleted(objectID, completed):
+            managedObjectContext.performBlock {
+                let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
+                    let object = try self.managedObjectContext.existingObjectWithID(objectID)
+                    var item = TodoItem(object: object)
+                    item.completed = completed
+                    item.apply(object)
                     self.editingItemID = nil
                 }
                 if let change = changeOrNil {

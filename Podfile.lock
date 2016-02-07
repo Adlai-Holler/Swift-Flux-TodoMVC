@@ -3,6 +3,7 @@ PODS:
   - AsyncDisplayKit (1.9.6):
     - AsyncDisplayKit/ASDealloc2MainObject (= 1.9.6)
   - AsyncDisplayKit/ASDealloc2MainObject (1.9.6)
+  - pop (1.0.9)
   - ReactiveCocoa (4.0.1):
     - ReactiveCocoa/UI (= 4.0.1)
     - Result (~> 1.0.2)
@@ -19,6 +20,7 @@ PODS:
 DEPENDENCIES:
   - ArrayDiff
   - AsyncDisplayKit (from `https://github.com/facebook/AsyncDisplayKit`, branch `master`)
+  - pop
   - ReactiveCocoa (~> 4.0.1)
 
 EXTERNAL SOURCES:
@@ -34,6 +36,7 @@ CHECKOUT OPTIONS:
 SPEC CHECKSUMS:
   ArrayDiff: 2925c7fbceb5928ab237002c73745c8973c8e948
   AsyncDisplayKit: 090a94923ae90f835459cce026217ca41ffe8fae
+  pop: f667631a5108a2e60d9e8797c9b32ddaf2080bce
   ReactiveCocoa: f7011630aee4deeb16352fcb1b50d6bde9db4f90
   Result: dd3dd71af3fa2e262f1a999e14fba2c25ec14f16
 

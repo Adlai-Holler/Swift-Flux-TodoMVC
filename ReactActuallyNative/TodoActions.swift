@@ -13,6 +13,8 @@ enum TodoAction {
     case Create(String)
     case BeginEditingTitle(NSManagedObjectID)
     case UpdateText(NSManagedObjectID, String)
+    case Delete(NSManagedObjectID)
+    case SetCompleted(NSManagedObjectID, Bool)
 
     func dispatch() {
         dispatcher.dispatch(self)

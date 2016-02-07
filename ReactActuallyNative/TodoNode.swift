@@ -10,6 +10,7 @@ import UIKit
 import AsyncDisplayKit
 import ReactiveCocoa
 import Result
+import pop
 
 final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
     struct State {
@@ -17,6 +18,7 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         var editingTitle: Bool
     }
     let textNode = ASTextNode()
+    let imageNode = ASImageNode()
     lazy var editableTextNode = ASEditableTextNode()
     private let lock = NSLock()
     private var _state: State
@@ -30,44 +32,80 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         _state = state
         super.init()
         textNode.layerBacked = true
-        textNode.opaque = true
-        textNode.backgroundColor = UIColor.whiteColor()
         addSubnode(textNode)
+        addSubnode(imageNode)
+
         setState(state)
+        imageNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
+    }
+
+    // MARK: Action Handling
+
+    @objc private func didTapCheckImage() {
+        let item = state.item
+        TodoAction.SetCompleted(item.objectID!, !item.completed).dispatch()
+    }
+
+    // MARK: State Updating
+
+    private struct StateTransitionInfo {
+        var shouldAnimateCheckImage: Bool
     }
 
     func setState(state: State) {
         lock.lock()
-        self._state = state
+        _state = state
         lock.unlock()
 
         let newTitle = NSAttributedString(string: state.item.title ?? "(Untitled)")
         if newTitle != textNode.attributedString {
             textNode.attributedString = newTitle
         }
+        let newImage = UIImage(named: state.item.completed ? "selection-on" : "selection-off")!
+        let shouldAnimate = interfaceState.contains(.Visible) && state.item.completed && imageNode.image != newImage
+        imageNode.image = newImage
+        let transitionInfo = StateTransitionInfo(shouldAnimateCheckImage: shouldAnimate)
         dispatch_async(dispatch_get_main_queue()) {
-            self.didSetState_mainThread(state)
+            self.didSetState_mainThread(state, info: transitionInfo)
         }
     }
 
-    private func didSetState_mainThread(state: State) {
+    private func didSetState_mainThread(state: State, info: StateTransitionInfo) {
+        if info.shouldAnimateCheckImage {
+            let animation = POPBasicAnimation(propertyNamed: kPOPLayerScaleXY)
+            animation.duration = 0.1
+            animation.toValue = NSValue(CGPoint: CGPoint(x: 1.1, y: 1.1))
+            imageNode.layer.pop_addAnimation(animation, forKey: "completeAnimation1")
+            animation.completionBlock = { _ in
+                let secondAnimation = POPSpringAnimation(propertyNamed: kPOPLayerScaleXY)
+                secondAnimation.springBounciness = 10
+                secondAnimation.toValue = NSValue(CGPoint: CGPoint(x: 1, y: 1))
+                self.imageNode.layer.pop_addAnimation(secondAnimation, forKey: "completeAnimation2")
+            }
+        }
+
         if state.editingTitle && textNode.supernode != nil {
             textNode.removeFromSupernode()
             editableTextNode.attributedText = textNode.attributedString
-            addSubnode(editableTextNode)
+            insertSubnode(editableTextNode, atIndex: 0)
             editableTextNode.becomeFirstResponder()
             editableTextNode.selectedRange = NSMakeRange(editableTextNode.attributedText!.length, 0)
             editableTextNode.delegate = self
+            editableTextNode.flexBasis = ASRelativeDimensionMakeWithPoints(1)
+            editableTextNode.flexGrow = true
         } else if !state.editingTitle && textNode.supernode == nil {
             editableTextNode.removeFromSupernode()
-            addSubnode(textNode)
+            insertSubnode(textNode, atIndex: 0)
         }
         setNeedsLayout()
         recursivelyEnsureDisplaySynchronously(true)
     }
 
+    // MARK: Layout
+
     override func layoutSpecThatFits(constrainedSize: ASSizeRange) -> ASLayoutSpec {
-        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16), child: subnodes.first!)
+        let stack = ASStackLayoutSpec(direction: .Horizontal, spacing: 0, justifyContent: .SpaceBetween, alignItems: .Center, children: subnodes)
+        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16), child: stack)
     }
 
     // MARK: Editable Text Node

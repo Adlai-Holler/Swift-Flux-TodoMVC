@@ -17,7 +17,6 @@
 		CCF756211C665F33009C57D1 /* TodoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756201C665F33009C57D1 /* TodoViewController.swift */; };
 		CCF756261C665F33009C57D1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CCF756251C665F33009C57D1 /* Assets.xcassets */; };
 		CCF756291C665F33009C57D1 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CCF756271C665F33009C57D1 /* LaunchScreen.storyboard */; };
-		CCF756311C665F73009C57D1 /* Component.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756301C665F73009C57D1 /* Component.swift */; };
 		CCF756331C666056009C57D1 /* CoreDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756321C666056009C57D1 /* CoreDataStore.swift */; };
 		CCF756361C6666E2009C57D1 /* Model.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CCF756341C6666E2009C57D1 /* Model.xcdatamodeld */; };
 		CCF756381C666736009C57D1 /* TodoNode.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756371C666736009C57D1 /* TodoNode.swift */; };
@@ -38,7 +37,6 @@
 		CCF756251C665F33009C57D1 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CCF756281C665F33009C57D1 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		CCF7562A1C665F33009C57D1 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		CCF756301C665F73009C57D1 /* Component.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Component.swift; sourceTree = "<group>"; };
 		CCF756321C666056009C57D1 /* CoreDataStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = CoreDataStore.swift; sourceTree = "<group>"; };
 		CCF756351C6666E2009C57D1 /* Model.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Model.xcdatamodel; sourceTree = "<group>"; };
 		CCF756371C666736009C57D1 /* TodoNode.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoNode.swift; sourceTree = "<group>"; };
@@ -107,7 +105,6 @@
 				CCF756371C666736009C57D1 /* TodoNode.swift */,
 				CC23B9E81C66BAD8000ED09F /* TableComponent.swift */,
 				CCF756341C6666E2009C57D1 /* Model.xcdatamodeld */,
-				CCF756301C665F73009C57D1 /* Component.swift */,
 				CCF756251C665F33009C57D1 /* Assets.xcassets */,
 				CCF756271C665F33009C57D1 /* LaunchScreen.storyboard */,
 				CCF7562A1C665F33009C57D1 /* Info.plist */,
@@ -241,7 +238,6 @@
 				CC23B9E71C668434000ED09F /* TodoStore.swift in Sources */,
 				CCF756211C665F33009C57D1 /* TodoViewController.swift in Sources */,
 				CC23B9E31C66716C000ED09F /* Dispatcher.swift in Sources */,
-				CCF756311C665F73009C57D1 /* Component.swift in Sources */,
 				CC23B9E91C66BAD8000ED09F /* TableComponent.swift in Sources */,
 				CCF756361C6666E2009C57D1 /* Model.xcdatamodeld in Sources */,
 				CCF756331C666056009C57D1 /* CoreDataStore.swift in Sources */,
