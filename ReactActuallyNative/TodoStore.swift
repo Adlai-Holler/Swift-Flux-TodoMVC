@@ -29,6 +29,10 @@ final class TodoStore {
         }
     }
 
+    deinit {
+        dispatcher.unregister(dispatchToken)
+    }
+
     var editingItemID: NSManagedObjectID?
 
     func getAll() -> [TodoItem] {

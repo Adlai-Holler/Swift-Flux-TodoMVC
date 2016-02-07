@@ -45,11 +45,8 @@ final class Dispatcher<Payload> {
 
     func unregister(token: DispatchToken) {
         dispatch_async(queue) {
-            guard let index = self.observers.indexForKey(token) else {
-                assertionFailure("Dispatcher.unregister(...): `\(token)` does not map to a registered callback.")
-                return
-            }
-            self.observers.removeAtIndex(index)
+            let observer = self.observers.removeValueForKey(token)
+            assert(observer != nil, "Dispatcher.unregister(...): `\(token)` does not map to a registered callback.")
         }
     }
 

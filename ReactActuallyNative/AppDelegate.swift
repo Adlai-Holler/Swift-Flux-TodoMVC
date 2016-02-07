@@ -44,7 +44,6 @@ final class AppDelegate: UIResponder, UIApplicationDelegate {
             UIAlertView(title: "Error", message: "There was an error launching the app. You're screwed. Sorry. \(error.domain) \(error.code)", delegate: nil, cancelButtonTitle: "OK").show()
             return false
         }
-
         let todoStore = TodoStore(managedObjectContext: dataStore!.managedObjectContext)
         let todoVC = TodoViewController(store: todoStore)
         let nav = UINavigationController(rootViewController: todoVC)
