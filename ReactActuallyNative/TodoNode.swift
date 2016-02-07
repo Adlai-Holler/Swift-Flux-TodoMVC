@@ -18,6 +18,7 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         var editingTitle: Bool
     }
     private let textNode = ASTextNode()
+    private let deleteBtnNode = ASButtonNode()
     private let completeBtnNode = ASButtonNode()
     private let editableTextNode = ASEditableTextNode()
 
@@ -40,13 +41,19 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         super.init()
         textNode.layerBacked = true
         addSubnode(textNode)
+        textNode.flexGrow = true
+        editableTextNode.flexGrow = true
+        addSubnode(deleteBtnNode)
         addSubnode(completeBtnNode)
+        deleteBtnNode.setImage(UIImage(named: "x-in-ring-20"), forState: .Normal)
         completeBtnNode.setImage(UIImage(named: "selection-on"), forState: .Selected)
         completeBtnNode.setImage(UIImage(named: "selection-off"), forState: .Normal)
-        completeBtnNode.hitTestSlop = UIEdgeInsets(top: -10, left: -10, bottom: -10, right: -10)
+        completeBtnNode.hitTestSlop = UIEdgeInsets(top: -8, left: -8, bottom: -8, right: -8)
+        deleteBtnNode.hitTestSlop = UIEdgeInsets(top: -8, left: -8, bottom: -8, right: -8)
 
         completeBtnNode.backgroundColor = UIColor.whiteColor()
         completeBtnNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
+        deleteBtnNode.addTarget(self, action: "didTapDeleteBtn", forControlEvents: .TouchUpInside)
         setState(state)
         editableTextNode.returnKeyType = .Done
     }
@@ -56,6 +63,11 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
     @objc private func didTapCheckImage() {
         let item = state.item
         TodoAction.SetCompleted(item.objectID!, !item.completed).dispatch()
+    }
+
+    @objc private func didTapDeleteBtn() {
+        if state.editingTitle { return }
+        TodoAction.Delete(state.item.objectID!).dispatch()
     }
 
     // MARK: State Updating
@@ -144,8 +156,8 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
     override func layoutSpecThatFits(constrainedSize: ASSizeRange) -> ASLayoutSpec {
         let stack = ASStackLayoutSpec(
             direction: .Horizontal,
-            spacing: 0,
-            justifyContent: .SpaceBetween,
+            spacing: 16,
+            justifyContent: .Center,
             alignItems: .Center,
             children: subnodes)
         return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16), child: stack)

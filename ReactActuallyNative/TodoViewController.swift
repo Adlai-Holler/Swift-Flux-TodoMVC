@@ -177,22 +177,4 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
     }
 
-    func tableView(tableView: UITableView, editingStyleForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCellEditingStyle {
-        guard let node = (tableView as? ASTableView)?.nodeForRowAtIndexPath(indexPath) as? TodoNode else {
-            return .None
-        }
-
-        if node.state.editingTitle {
-            return .None
-        } else {
-            return .Delete
-        }
-    }
-
-    func tableView(tableView: UITableView, commitEditingStyle editingStyle: UITableViewCellEditingStyle, forRowAtIndexPath indexPath: NSIndexPath) {
-        guard let node = (tableView as? ASTableView)?.nodeForRowAtIndexPath(indexPath) as? TodoNode else {
-            return
-        }
-        TodoAction.Delete(node.state.item.objectID!).dispatch()
-    }
 }
