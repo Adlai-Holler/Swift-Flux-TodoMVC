@@ -12,7 +12,7 @@ typealias DispatchToken = Int
 
 let dispatcher = Dispatcher<TodoAction>()
 
-private class DispatchObserver<Payload> {
+private final class DispatchObserver<Payload> {
     let token: DispatchToken
     var handled = false
     var pending = false

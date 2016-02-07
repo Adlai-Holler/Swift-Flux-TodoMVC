@@ -32,6 +32,8 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     private let nodeCache = NSMapTable.strongToWeakObjectsMapTable()
     private var tableData: [BasicSection<ASCellNode>] = []
+    private var hasTableDataBeenQueried = false
+    private let tableDataLock = NSLock()
     init(store: TodoStore) {
         self.store = store
         queue = dispatch_queue_create("TodoViewController Queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0))
@@ -45,13 +47,13 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         /// Async onto our queue so we can wait for this to finish
         /// before our first layout if needed.
         dispatch_async(queue) {
-            var newState = self.state
-            newState.items = store.getAll()
-            self.setState(newState, isInitial: true)
-
             self.deinitDisposable += store.changes.observeNext { [weak self] event in
                 self?.handleStoreChangeWithEvent(event)
             }
+
+            var newState = self.state
+            newState.items = store.getAll()
+            self.setState(newState)
         }
     }
 
@@ -66,21 +68,11 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     // MARK: Model Observing
 
     private func handleStoreChangeWithEvent(event: TodoStore.Event) {
-        guard case let .Change(details) = event else { return }
+        guard case .Change = event else { return }
 
-        let updatedObjectIDs = Set(details.updatedObjects.map { $0.objectID })
-        let deletedObjectIDs = Set(details.deletedObjects.map { $0.objectID })
-        let insertedObjects = details.insertedObjects
-        dispatch_sync(queue) {
-            let oldState = self.state
-            var newState = oldState
-            newState.items = newState.items.filter { !deletedObjectIDs.contains($0.objectID!) }
-            for (i, item) in newState.items.enumerate() where updatedObjectIDs.contains(item.objectID!) {
-                let object = try! self.store.managedObjectContext.existingObjectWithID(item.objectID!)
-                newState.items[i] = TodoItem(object: object)
-            }
-            newState.items += insertedObjects.flatMap { $0.entity.name == "TodoItem" ? TodoItem(object: $0) : nil }
-            newState.items.sortInPlace { $0.id < $1.id }
+        dispatch_async(queue) {
+            var newState = self.state
+            newState.items = self.store.getAll()
             newState.editingItemID = self.store.editingItemID
             self.setState(newState)
         }
@@ -111,23 +103,33 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         return [ BasicSection(name: "Single Section", items: nodes) ]
     }
 
-    func setState(newState: State, isInitial: Bool = false) {
-        dispatch_async(queue) {
-            self.state = newState
+    private func setState(newState: State) {
+        state = newState
 
-            let oldData = self.tableData
-            self.tableData = self.renderTableData(self.nodeCache)
-            if isInitial { return }
+        tableDataLock.lock()
+        let oldData = tableData
+        tableDataLock.unlock()
+        let newData = renderTableData(nodeCache)
 
-            let diff = oldData.diffNested(self.tableData)
-            guard !diff.isEmpty else { return }
+        let diff = oldData.diffNested(newData)
+        if diff.isEmpty { return }
 
-            dispatch_async(dispatch_get_main_queue()) {
-                let tableView = self.tableNode.view
-                tableView.beginUpdates()
-                diff.applyToTableView(tableView, rowAnimation: .Automatic)
-                tableView.endUpdates()
-            }
+        tableDataLock.lock()
+        if !hasTableDataBeenQueried {
+            self.tableData = newData
+            tableDataLock.unlock()
+            return
+        }
+        tableDataLock.unlock()
+
+        dispatch_async(dispatch_get_main_queue()) {
+            let tableView = self.tableNode.view
+            tableView.beginUpdates()
+            self.tableDataLock.lock()
+            self.tableData = newData
+            self.tableDataLock.unlock()
+            diff.applyToTableView(tableView, rowAnimation: .Automatic)
+            tableView.endUpdates()
         }
     }
 
@@ -142,6 +144,15 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     }
 
     // MARK: Table View Data Source Methods
+
+    func tableViewLockDataSource(tableView: ASTableView) {
+        tableDataLock.lock()
+        hasTableDataBeenQueried = true
+    }
+
+    func tableViewUnlockDataSource(tableView: ASTableView) {
+        tableDataLock.unlock()
+    }
 
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return tableData.count

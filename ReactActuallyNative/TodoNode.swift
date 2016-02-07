@@ -17,9 +17,9 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         var item: TodoItem
         var editingTitle: Bool
     }
-    let textNode = ASTextNode()
-    let imageNode = ASImageNode()
-    lazy var editableTextNode = ASEditableTextNode()
+    private let textNode = ASTextNode()
+    private let imageNode = ASImageNode()
+    private lazy var editableTextNode = ASEditableTextNode()
     private let lock = NSLock()
     private var _state: State
     var state: State {
@@ -28,16 +28,23 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         return _state
     }
 
+    struct Style {
+        static let titleAttributes = [
+            NSFontAttributeName: UIFont.systemFontOfSize(18, weight: UIFontWeightLight)
+        ]
+    }
+
     init(state: State) {
         _state = state
         super.init()
         textNode.layerBacked = true
         addSubnode(textNode)
         addSubnode(imageNode)
+        imageNode.hitTestSlop = UIEdgeInsets(top: -10, left: -10, bottom: -10, right: -10)
 
         imageNode.backgroundColor = UIColor.whiteColor()
-        setState(state)
         imageNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
+        setState(state)
     }
 
     // MARK: Action Handling
@@ -58,7 +65,7 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         _state = state
         lock.unlock()
 
-        let newTitle = NSAttributedString(string: state.item.title ?? "(Untitled)")
+        let newTitle = NSAttributedString(string: state.item.title ?? "(Untitled)", attributes: Style.titleAttributes)
         if newTitle != textNode.attributedString {
             textNode.attributedString = newTitle
         }
@@ -99,14 +106,21 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
             insertSubnode(textNode, atIndex: 0)
         }
         setNeedsLayout()
-        recursivelyEnsureDisplaySynchronously(true)
+        if interfaceState.contains(.Visible) {
+            recursivelyEnsureDisplaySynchronously(true)
+        }
     }
 
     // MARK: Layout
 
     override func layoutSpecThatFits(constrainedSize: ASSizeRange) -> ASLayoutSpec {
-        let stack = ASStackLayoutSpec(direction: .Horizontal, spacing: 0, justifyContent: .SpaceBetween, alignItems: .Center, children: subnodes)
-        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16), child: stack)
+        let stack = ASStackLayoutSpec(
+            direction: .Horizontal,
+            spacing: 0,
+            justifyContent: .SpaceBetween,
+            alignItems: .Center,
+            children: subnodes)
+        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 12, left: 16, bottom: 12, right: 16), child: stack)
     }
 
     // MARK: Editable Text Node
