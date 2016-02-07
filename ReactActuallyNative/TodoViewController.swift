@@ -36,6 +36,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         self.store = store
         queue = dispatch_queue_create("TodoViewController Queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0))
         super.init(node: ASTableNode(style: .Plain))
+        title = "Todo MVC"
         navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .Add, target: self, action: "didTapAdd")
         tableNode.dataSource = self
         tableNode.delegate = self
@@ -123,6 +124,11 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
                 tableView.endUpdates()
             }
         }
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableNode.view.tableFooterView = UIView()
     }
 
     override func viewWillLayoutSubviews() {
