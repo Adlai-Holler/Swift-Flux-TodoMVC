@@ -10,7 +10,7 @@ import Foundation
 import CoreData
 
 enum TodoAction {
-    case Create(String)
+    case Create
     case BeginEditingTitle(NSManagedObjectID)
     case UpdateText(NSManagedObjectID, String)
     case Delete(NSManagedObjectID)

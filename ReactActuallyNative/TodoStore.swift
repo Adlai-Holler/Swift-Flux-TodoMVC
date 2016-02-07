@@ -53,13 +53,15 @@ final class TodoStore {
         case let .BeginEditingTitle(objectID):
             self.editingItemID = objectID
             changeObserver.sendNext(.Change(ManagedObjectContextChange()))
-        case let .Create(title):
+        case .Create:
             managedObjectContext.performBlock {
                 let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
-                    let item = TodoItem(id: TodoItem.maxId, title: title, completed: false)
+                    let item = TodoItem(id: TodoItem.maxId, title: nil, completed: false)
                     TodoItem.incrementMaxID()
                     let obj = NSEntityDescription.insertNewObjectForEntityForName(TodoItem.entityName, inManagedObjectContext: self.managedObjectContext)
                     item.apply(obj)
+                    try self.managedObjectContext.obtainPermanentIDsForObjects([obj])
+                    self.editingItemID = obj.objectID
                 }
                 if let change = changeOrNil {
                     self.changeObserver.sendNext(.Change(change))

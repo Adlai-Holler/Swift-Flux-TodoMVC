@@ -65,10 +65,18 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         _state = state
         lock.unlock()
 
-        let newTitle = NSAttributedString(string: state.item.title ?? "(Untitled)", attributes: Style.titleAttributes)
+        /// We use a gross hack where we show a " " instead of empty string so that
+        /// the node's size will be right. This means your to-dos probably have
+        /// a trailing space after them.
+        var displayTitle = state.item.title ?? ""
+        if displayTitle.isEmpty {
+            displayTitle = " "
+        }
+        let newTitle = NSAttributedString(string: displayTitle, attributes: Style.titleAttributes)
         if newTitle != textNode.attributedString {
             textNode.attributedString = newTitle
         }
+        textNode.preferredFrameSize.height = Style.titleAttributes[NSFontAttributeName]!.lineHeight
         let newImage = UIImage(named: state.item.completed ? "selection-on" : "selection-off")!
         let shouldAnimate = interfaceState.contains(.Visible) && state.item.completed && imageNode.image != newImage
         imageNode.image = newImage
@@ -95,9 +103,12 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         if state.editingTitle && textNode.supernode != nil {
             textNode.removeFromSupernode()
             editableTextNode.attributedText = textNode.attributedString
+            editableTextNode.typingAttributes = Style.titleAttributes
             insertSubnode(editableTextNode, atIndex: 0)
-            editableTextNode.becomeFirstResponder()
-            editableTextNode.selectedRange = NSMakeRange(editableTextNode.attributedText!.length, 0)
+            if interfaceState.contains(.InHierarchy) {
+                editableTextNode.becomeFirstResponder()
+            }
+            editableTextNode.selectedRange = NSMakeRange(editableTextNode.attributedText?.length ?? 0, 0)
             editableTextNode.delegate = self
             editableTextNode.flexBasis = ASRelativeDimensionMakeWithPoints(1)
             editableTextNode.flexGrow = true
@@ -108,6 +119,15 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         setNeedsLayout()
         if interfaceState.contains(.Visible) {
             recursivelyEnsureDisplaySynchronously(true)
+        }
+    }
+
+    /// If we just entered the hierarchy and we're editing title, make our editable
+    /// title node the first responder.
+    override func interfaceStateDidChange(newState: ASInterfaceState, fromState oldState: ASInterfaceState) {
+        super.interfaceStateDidChange(newState, fromState: oldState)
+        if newState.contains(.InHierarchy) && state.editingTitle && !editableTextNode.isFirstResponder() {
+            editableTextNode.becomeFirstResponder()
         }
     }
 

@@ -81,7 +81,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     // MARK: UI Action Observing
 
     @objc private func didTapAdd() {
-        TodoAction.Create("Hello!").dispatch()
+        TodoAction.Create.dispatch()
     }
 
     @objc private func didTapClear() {
