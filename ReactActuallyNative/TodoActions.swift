@@ -11,6 +11,7 @@ import CoreData
 
 enum TodoAction {
     case Create(String)
+    case BeginEditingTitle(NSManagedObjectID)
     case UpdateText(NSManagedObjectID, String)
 
     func dispatch() {

@@ -11,37 +11,78 @@ import AsyncDisplayKit
 import ReactiveCocoa
 import Result
 
-final class TodoNode: ASCellNode {
+final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
+    struct State {
+        var item: TodoItem
+        var editingTitle: Bool
+    }
     let textNode = ASTextNode()
-    let item: AnyProperty<TodoItem>
-    private let deinitDisposable = CompositeDisposable()
+    lazy var editableTextNode = ASEditableTextNode()
+    private let lock = NSLock()
+    private var _state: State
+    var state: State {
+        lock.lock()
+        defer { lock.unlock() }
+        return _state
+    }
 
-    init(item: AnyProperty<TodoItem>) {
-        self.item = item
+    init(state: State) {
+        _state = state
         super.init()
         textNode.layerBacked = true
         textNode.opaque = true
         textNode.backgroundColor = UIColor.whiteColor()
         addSubnode(textNode)
-
-        deinitDisposable += item.producer.startWithNext { [weak self] in self?.itemDidChange($0) }
+        setState(state)
     }
 
-    deinit {
-        deinitDisposable.dispose()
-    }
+    func setState(state: State) {
+        lock.lock()
+        self._state = state
+        lock.unlock()
 
-    private func itemDidChange(item: TodoItem) {
-        let newTitle = NSAttributedString(string: item.title ?? "(Untitled)")
+        let newTitle = NSAttributedString(string: state.item.title ?? "(Untitled)")
         if newTitle != textNode.attributedString {
             textNode.attributedString = newTitle
-            dispatch_async(dispatch_get_main_queue()) {
-                self.setNeedsLayout()
-            }
+        }
+        dispatch_async(dispatch_get_main_queue()) {
+            self.didSetState_mainThread(state)
         }
     }
 
-    override func layoutSpecThatFits(constrainedSize: ASSizeRange) -> ASLayoutSpec {
-        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16), child: textNode)
+    private func didSetState_mainThread(state: State) {
+        if state.editingTitle && textNode.supernode != nil {
+            textNode.removeFromSupernode()
+            editableTextNode.attributedText = textNode.attributedString
+            addSubnode(editableTextNode)
+            editableTextNode.becomeFirstResponder()
+            editableTextNode.selectedRange = NSMakeRange(editableTextNode.attributedText!.length, 0)
+            editableTextNode.delegate = self
+        } else if !state.editingTitle && textNode.supernode == nil {
+            editableTextNode.removeFromSupernode()
+            addSubnode(textNode)
+        }
+        setNeedsLayout()
+        recursivelyEnsureDisplaySynchronously(true)
     }
+
+    override func layoutSpecThatFits(constrainedSize: ASSizeRange) -> ASLayoutSpec {
+        return ASInsetLayoutSpec(insets: UIEdgeInsets(top: 16, left: 16, bottom: 16, right: 16), child: subnodes.first!)
+    }
+
+    // MARK: Editable Text Node
+
+    /// If they hit newline, reject the edit and end editing.
+    func editableTextNode(editableTextNode: ASEditableTextNode, shouldChangeTextInRange range: NSRange, replacementText text: String) -> Bool {
+        if text.rangeOfString("\n") != nil {
+            editableTextNode.resignFirstResponder()
+            return false
+        }
+        return true
+    }
+
+    func editableTextNodeDidFinishEditing(editableTextNode: ASEditableTextNode) {
+        TodoAction.UpdateText(state.item.objectID!, editableTextNode.attributedText?.string ?? "").dispatch()
+    }
+
 }

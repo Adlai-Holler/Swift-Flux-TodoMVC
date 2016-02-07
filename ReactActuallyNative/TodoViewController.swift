@@ -15,9 +15,10 @@ import ArrayDiff
 final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSource {
 
     struct State {
-        var items: [MutableProperty<TodoItem>]
+        var items: [TodoItem]
+        var editingItemID: NSManagedObjectID?
 
-        static let empty = State(items: [])
+        static let empty = State(items: [], editingItemID: nil)
     }
 
     var tableNode: ASTableNode {
@@ -29,6 +30,8 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     let queue: dispatch_queue_t
     let deinitDisposable = CompositeDisposable()
 
+    private let nodeCache = NSMapTable.strongToWeakObjectsMapTable()
+    private var tableData: [BasicSection<ASCellNode>] = []
     init(store: TodoStore) {
         self.store = store
         queue = dispatch_queue_create("TodoViewController Queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0))
@@ -41,12 +44,12 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         /// before our first layout if needed.
         dispatch_async(queue) {
             var newState = self.state
-            newState.items = store.getAll().map(MutableProperty.init)
+            newState.items = store.getAll()
             self.setState(newState, isInitial: true)
 
-            self.deinitDisposable += NSNotificationCenter.defaultCenter()
-                .rac_notifications(NSManagedObjectContextDidSaveNotification, object: store.managedObjectContext)
-                .startWithNext { [weak self] in self?.handleContextDidSaveWithNotification($0) }
+            self.deinitDisposable += store.changes.observeNext { [weak self] event in
+                self?.handleStoreChangeWithEvent(event)
+            }
         }
     }
 
@@ -60,22 +63,23 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     // MARK: Model Observing
 
-    private func handleContextDidSaveWithNotification(notification: NSNotification) {
+    private func handleStoreChangeWithEvent(event: TodoStore.Event) {
+        guard case let .Change(details) = event else { return }
 
-        let updatedObjectIDs = (notification.userInfo?[NSUpdatedObjectsKey] as! NSSet?)?.valueForKey("objectID") as! Set<NSManagedObjectID>? ?? []
-        let deletedObjectIDs = (notification.userInfo?[NSDeletedObjectsKey] as! NSSet?)?.valueForKey("objectID") as! Set<NSManagedObjectID>? ?? []
-        let insertedObjects = notification.userInfo?[NSInsertedObjectsKey] as! Set<NSManagedObject>? ?? []
+        let updatedObjectIDs = Set(details.updatedObjects.map { $0.objectID })
+        let deletedObjectIDs = Set(details.deletedObjects.map { $0.objectID })
+        let insertedObjects = details.insertedObjects
         dispatch_sync(queue) {
             let oldState = self.state
             var newState = oldState
-            newState.items = newState.items.filter { !deletedObjectIDs.contains($0.value.objectID!) }
-            for itemProperty in newState.items where updatedObjectIDs.contains(itemProperty.value.objectID!) {
-                let object = try! self.store.managedObjectContext.existingObjectWithID(itemProperty.value.objectID!)
-                /// Send new value into existing node.
-                itemProperty.value = TodoItem(object: object)
+            newState.items = newState.items.filter { !deletedObjectIDs.contains($0.objectID!) }
+            for (i, item) in newState.items.enumerate() where updatedObjectIDs.contains(item.objectID!) {
+                let object = try! self.store.managedObjectContext.existingObjectWithID(item.objectID!)
+                newState.items[i] = TodoItem(object: object)
             }
-            newState.items += insertedObjects.flatMap { $0.entity.name == "TodoItem" ? MutableProperty(TodoItem(object: $0)) : nil }
-            newState.items.sortInPlace { $0.value.id < $1.value.id }
+            newState.items += insertedObjects.flatMap { $0.entity.name == "TodoItem" ? TodoItem(object: $0) : nil }
+            newState.items.sortInPlace { $0.id < $1.id }
+            newState.editingItemID = self.store.editingItemID
             self.setState(newState)
         }
     }
@@ -88,19 +92,28 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     // MARK: State Updating
 
+    func renderTableData(nodeCache: NodeCache) -> [BasicSection<ASCellNode>] {
+        let state = self.state
+        let nodes = state.items.map { item -> TodoNode in
+            let state = TodoNode.State(item: item, editingTitle: state.editingItemID == item.objectID)
+            let node: TodoNode = nodeCache.nodeForKey("Todo Item Node \(item.id)", create: { key in
+                TodoNode(state: state)
+            })
+            node.setState(state)
+            return node
+        }
+        return [ BasicSection(name: "Single Section", items: nodes) ]
+    }
+
     func setState(newState: State, isInitial: Bool = false) {
         dispatch_async(queue) {
-            let oldState = self.state
             self.state = newState
+
+            let oldData = self.tableData
+            self.tableData = self.renderTableData(self.nodeCache)
             if isInitial { return }
 
-            let oldItemIDs = oldState.items.map { $0.value.id }
-            let newItemIDs = newState.items.map { $0.value.id }
-            let diff = [
-                    BasicSection(name: "Single Section", items: oldItemIDs)
-                ].diffNested([
-                    BasicSection(name: "Single Section", items: newItemIDs)
-                ])
+            let diff = oldData.diffNested(self.tableData)
             guard !diff.isEmpty else { return }
 
             dispatch_async(dispatch_get_main_queue()) {
@@ -119,13 +132,16 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     // MARK: Table View Data Source Methods
 
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        return tableData.count
+    }
+
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return state.items.count
+        return tableData[section].items.count
     }
 
     func tableView(tableView: ASTableView, nodeForRowAtIndexPath indexPath: NSIndexPath) -> ASCellNode {
-        let item = state.items[indexPath.row]
-        return TodoNode(item: AnyProperty(item))
+        return tableData[indexPath]!
     }
 
     // MARK: Table View Delegate Methods
@@ -135,10 +151,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
             return
         }
 
-        let todoItem = node.item.value
-        TodoAction
-            .UpdateText(todoItem.objectID!, "\(todoItem.title!)\(todoItem.title!)")
-            .dispatch()
+        TodoAction.BeginEditingTitle(node.state.item.objectID!).dispatch()
         tableView.deselectRowAtIndexPath(indexPath, animated: true)
     }
 }

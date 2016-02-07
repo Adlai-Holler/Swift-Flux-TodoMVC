@@ -11,6 +11,8 @@
 		CC23B9E31C66716C000ED09F /* Dispatcher.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E21C66716C000ED09F /* Dispatcher.swift */; };
 		CC23B9E51C667192000ED09F /* TodoActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E41C667192000ED09F /* TodoActions.swift */; };
 		CC23B9E71C668434000ED09F /* TodoStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E61C668434000ED09F /* TodoStore.swift */; };
+		CC23B9E91C66BAD8000ED09F /* TableComponent.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9E81C66BAD8000ED09F /* TableComponent.swift */; };
+		CC23B9EB1C66C5C0000ED09F /* ManagedObjectContextChange.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC23B9EA1C66C5C0000ED09F /* ManagedObjectContextChange.swift */; };
 		CCF7561F1C665F33009C57D1 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF7561E1C665F33009C57D1 /* AppDelegate.swift */; };
 		CCF756211C665F33009C57D1 /* TodoViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCF756201C665F33009C57D1 /* TodoViewController.swift */; };
 		CCF756261C665F33009C57D1 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CCF756251C665F33009C57D1 /* Assets.xcassets */; };
@@ -28,6 +30,8 @@
 		CC23B9E21C66716C000ED09F /* Dispatcher.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Dispatcher.swift; sourceTree = "<group>"; };
 		CC23B9E41C667192000ED09F /* TodoActions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoActions.swift; sourceTree = "<group>"; };
 		CC23B9E61C668434000ED09F /* TodoStore.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TodoStore.swift; sourceTree = "<group>"; };
+		CC23B9E81C66BAD8000ED09F /* TableComponent.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TableComponent.swift; sourceTree = "<group>"; };
+		CC23B9EA1C66C5C0000ED09F /* ManagedObjectContextChange.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ManagedObjectContextChange.swift; sourceTree = "<group>"; };
 		CCF7561B1C665F33009C57D1 /* ReactActuallyNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ReactActuallyNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CCF7561E1C665F33009C57D1 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		CCF756201C665F33009C57D1 /* TodoViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodoViewController.swift; sourceTree = "<group>"; };
@@ -92,6 +96,7 @@
 		CCF7561D1C665F33009C57D1 /* ReactActuallyNative */ = {
 			isa = PBXGroup;
 			children = (
+				CC23B9EA1C66C5C0000ED09F /* ManagedObjectContextChange.swift */,
 				CC23B9E21C66716C000ED09F /* Dispatcher.swift */,
 				CC23B9E41C667192000ED09F /* TodoActions.swift */,
 				CCF7561E1C665F33009C57D1 /* AppDelegate.swift */,
@@ -100,6 +105,7 @@
 				CCF756201C665F33009C57D1 /* TodoViewController.swift */,
 				CCF756391C666776009C57D1 /* TodoItem.swift */,
 				CCF756371C666736009C57D1 /* TodoNode.swift */,
+				CC23B9E81C66BAD8000ED09F /* TableComponent.swift */,
 				CCF756341C6666E2009C57D1 /* Model.xcdatamodeld */,
 				CCF756301C665F73009C57D1 /* Component.swift */,
 				CCF756251C665F33009C57D1 /* Assets.xcassets */,
@@ -230,11 +236,13 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC23B9EB1C66C5C0000ED09F /* ManagedObjectContextChange.swift in Sources */,
 				CCF7563A1C666776009C57D1 /* TodoItem.swift in Sources */,
 				CC23B9E71C668434000ED09F /* TodoStore.swift in Sources */,
 				CCF756211C665F33009C57D1 /* TodoViewController.swift in Sources */,
 				CC23B9E31C66716C000ED09F /* Dispatcher.swift in Sources */,
 				CCF756311C665F73009C57D1 /* Component.swift in Sources */,
+				CC23B9E91C66BAD8000ED09F /* TableComponent.swift in Sources */,
 				CCF756361C6666E2009C57D1 /* Model.xcdatamodeld in Sources */,
 				CCF756331C666056009C57D1 /* CoreDataStore.swift in Sources */,
 				CC23B9E51C667192000ED09F /* TodoActions.swift in Sources */,
