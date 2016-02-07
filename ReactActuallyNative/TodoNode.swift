@@ -18,8 +18,9 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         var editingTitle: Bool
     }
     private let textNode = ASTextNode()
-    private let imageNode = ASImageNode()
-    private lazy var editableTextNode = ASEditableTextNode()
+    private let completeBtnNode = ASButtonNode()
+    private let editableTextNode = ASEditableTextNode()
+
     private let lock = NSLock()
     private var _state: State
     var state: State {
@@ -39,12 +40,15 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         super.init()
         textNode.layerBacked = true
         addSubnode(textNode)
-        addSubnode(imageNode)
-        imageNode.hitTestSlop = UIEdgeInsets(top: -10, left: -10, bottom: -10, right: -10)
+        addSubnode(completeBtnNode)
+        completeBtnNode.setImage(UIImage(named: "selection-on"), forState: .Selected)
+        completeBtnNode.setImage(UIImage(named: "selection-off"), forState: .Normal)
+        completeBtnNode.hitTestSlop = UIEdgeInsets(top: -10, left: -10, bottom: -10, right: -10)
 
-        imageNode.backgroundColor = UIColor.whiteColor()
-        imageNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
+        completeBtnNode.backgroundColor = UIColor.whiteColor()
+        completeBtnNode.addTarget(self, action: "didTapCheckImage", forControlEvents: .TouchUpInside)
         setState(state)
+        editableTextNode.returnKeyType = .Done
     }
 
     // MARK: Action Handling
@@ -56,15 +60,12 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
 
     // MARK: State Updating
 
-    private struct StateTransitionInfo {
-        var shouldAnimateCheckImage: Bool
-    }
-
     func setState(state: State) {
         lock.lock()
         _state = state
         lock.unlock()
 
+        var needsLayout = false
         /// We use a gross hack where we show a " " instead of empty string so that
         /// the node's size will be right. This means your to-dos probably have
         /// a trailing space after them.
@@ -75,32 +76,35 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         let newTitle = NSAttributedString(string: displayTitle, attributes: Style.titleAttributes)
         if newTitle != textNode.attributedString {
             textNode.attributedString = newTitle
+            needsLayout = true
         }
-        textNode.preferredFrameSize.height = Style.titleAttributes[NSFontAttributeName]!.lineHeight
-        let newImage = UIImage(named: state.item.completed ? "selection-on" : "selection-off")!
-        let shouldAnimate = interfaceState.contains(.Visible) && state.item.completed && imageNode.image != newImage
-        imageNode.image = newImage
-        let transitionInfo = StateTransitionInfo(shouldAnimateCheckImage: shouldAnimate)
+
         dispatch_async(dispatch_get_main_queue()) {
-            self.didSetState_mainThread(state, info: transitionInfo)
+            self.didSetState_mainThread(state, needsLayout: needsLayout)
         }
     }
 
-    private func didSetState_mainThread(state: State, info: StateTransitionInfo) {
-        if info.shouldAnimateCheckImage {
+    private func didSetState_mainThread(state: State, var needsLayout: Bool) {
+        let visible = interfaceState.contains(.Visible)
+        let shouldAnimate = visible
+            && state.item.completed
+            && completeBtnNode.selected == false
+        completeBtnNode.selected = state.item.completed
+
+        if shouldAnimate {
             let animation = POPBasicAnimation(propertyNamed: kPOPLayerScaleXY)
             animation.duration = 0.1
             animation.toValue = NSValue(CGPoint: CGPoint(x: 1.1, y: 1.1))
-            imageNode.layer.pop_addAnimation(animation, forKey: "completeAnimation1")
+            completeBtnNode.layer.pop_addAnimation(animation, forKey: "completeAnimation1")
             animation.completionBlock = { _ in
                 let secondAnimation = POPSpringAnimation(propertyNamed: kPOPLayerScaleXY)
                 secondAnimation.springBounciness = 10
                 secondAnimation.toValue = NSValue(CGPoint: CGPoint(x: 1, y: 1))
-                self.imageNode.layer.pop_addAnimation(secondAnimation, forKey: "completeAnimation2")
+                self.completeBtnNode.layer.pop_addAnimation(secondAnimation, forKey: "completeAnimation2")
             }
         }
 
-        if state.editingTitle && textNode.supernode != nil {
+        if state.editingTitle && editableTextNode.supernode == nil {
             textNode.removeFromSupernode()
             editableTextNode.attributedText = textNode.attributedString
             editableTextNode.typingAttributes = Style.titleAttributes
@@ -112,12 +116,16 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
             editableTextNode.delegate = self
             editableTextNode.flexBasis = ASRelativeDimensionMakeWithPoints(1)
             editableTextNode.flexGrow = true
+            needsLayout = true
         } else if !state.editingTitle && textNode.supernode == nil {
             editableTextNode.removeFromSupernode()
             insertSubnode(textNode, atIndex: 0)
+            needsLayout = true
         }
-        setNeedsLayout()
-        if interfaceState.contains(.Visible) {
+        if needsLayout {
+            setNeedsLayout()
+        }
+        if visible {
             recursivelyEnsureDisplaySynchronously(true)
         }
     }
