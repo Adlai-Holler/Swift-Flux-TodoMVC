@@ -42,9 +42,17 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         textNode.layerBacked = true
         addSubnode(textNode)
         textNode.flexGrow = true
-        editableTextNode.flexGrow = true
         addSubnode(deleteBtnNode)
         addSubnode(completeBtnNode)
+
+        editableTextNode.flexGrow = true
+        /// Currently if we don't set an absolute flex basis
+        /// for the editable text node we get a layout assertion
+        /// failure in ASDK for an invalid width.
+        editableTextNode.flexBasis = ASRelativeDimensionMakeWithPoints(1)
+        editableTextNode.delegate = self
+        editableTextNode.typingAttributes = Style.titleAttributes
+
         deleteBtnNode.setImage(UIImage(named: "x-in-ring-20"), forState: .Normal)
         completeBtnNode.setImage(UIImage(named: "selection-on"), forState: .Selected)
         completeBtnNode.setImage(UIImage(named: "selection-off"), forState: .Normal)
@@ -119,15 +127,11 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
         if state.editingTitle && editableTextNode.supernode == nil {
             textNode.removeFromSupernode()
             editableTextNode.attributedText = textNode.attributedString
-            editableTextNode.typingAttributes = Style.titleAttributes
             insertSubnode(editableTextNode, atIndex: 0)
             if interfaceState.contains(.InHierarchy) {
                 editableTextNode.becomeFirstResponder()
             }
             editableTextNode.selectedRange = NSMakeRange(editableTextNode.attributedText?.length ?? 0, 0)
-            editableTextNode.delegate = self
-            editableTextNode.flexBasis = ASRelativeDimensionMakeWithPoints(1)
-            editableTextNode.flexGrow = true
             needsLayout = true
         } else if !state.editingTitle && textNode.supernode == nil {
             editableTextNode.removeFromSupernode()
