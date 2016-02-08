@@ -74,7 +74,6 @@ final class TodoNode: ASCellNode, ASEditableTextNodeDelegate {
     }
 
     @objc private func didTapDeleteBtn() {
-        if state.editingTitle { return }
         TodoAction.Delete(state.item.objectID!).dispatch()
     }
 

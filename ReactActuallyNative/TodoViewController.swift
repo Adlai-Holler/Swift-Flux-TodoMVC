@@ -120,14 +120,25 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 		}
 		if !hasBeenQueried { return }
 
+        let deletedIndexPaths = diff.itemDiffs[0]?.removedIndexes.indexPathsInSection(0)
         dispatch_async(dispatch_get_main_queue()) {
             let tableView = self.tableNode.view
+            /// A little gross but our ASEditableTextNodes refuse to resign during updates!
+            if let deletedIndexPaths = deletedIndexPaths {
+                self.forceResignIfFirstResponderIsAtIndexPath(deletedIndexPaths)
+            }
             tableView.beginUpdates()
 			self.tableDataLock.withCriticalScope {
 				self.tableData = newData
 			}
             diff.applyToTableView(tableView, rowAnimation: .Automatic)
             tableView.endUpdates()
+        }
+    }
+
+    private func forceResignIfFirstResponderIsAtIndexPath(indexPaths: [NSIndexPath]) {
+        for indexPath in indexPaths {
+             tableNode.view.cellForRowAtIndexPath(indexPath)?.endEditing(true)
         }
     }
 

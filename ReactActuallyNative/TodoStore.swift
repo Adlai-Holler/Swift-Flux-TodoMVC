@@ -103,7 +103,6 @@ final class TodoStore {
                     var item = TodoItem(object: object)
                     item.completed = completed
                     item.apply(object)
-                    self.editingItemID = nil
                 }
                 if let change = changeOrNil {
                     self.changeObserver.sendNext(.Change(change))
