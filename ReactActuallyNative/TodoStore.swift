@@ -119,7 +119,7 @@ final class TodoStore {
                     }
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: "Failed to create your Todo Item."))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
                 }
             }
         }
