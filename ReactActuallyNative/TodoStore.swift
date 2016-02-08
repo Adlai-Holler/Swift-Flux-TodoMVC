@@ -61,7 +61,7 @@ final class TodoStore {
                     self.editingItemID = obj.objectID
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(change))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
                 }
             }
         case let .UpdateText(objectID, newTitle):
