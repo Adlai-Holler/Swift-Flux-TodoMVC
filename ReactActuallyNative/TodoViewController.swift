@@ -123,10 +123,6 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         }
 		if !hasBeenQueried { return }
 
-        if diff.itemDiffs[0]!.removedIndexes.count > diff.itemDiffs[0]!.insertedIndexes.count {
-
-        }
-
         let deletedIndexPaths = diff.itemDiffs[0]?.removedIndexes.indexPathsInSection(0)
         dispatch_async(dispatch_get_main_queue()) {
             let tableView = self.tableNode.view
