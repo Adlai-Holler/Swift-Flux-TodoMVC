@@ -11,6 +11,7 @@ import CoreData
 import AsyncDisplayKit
 import ReactiveCocoa
 import ArrayDiff
+import Whisper
 
 final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSource {
 
@@ -70,7 +71,14 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     // MARK: Model Observing
 
     private func handleStoreChangeWithEvent(event: TodoStore.Event) {
-        guard case .Change = event else { return }
+        guard case let .Change(_, error) = event else { return }
+
+        if let error = error {
+            dispatch_async(dispatch_get_main_queue()) {
+                let message = Message(title: error, backgroundColor: UIColor.redColor())
+                Whisper(message, to: self.navigationController!)
+            }
+        }
 
         dispatch_async(queue) {
             var newState = self.state

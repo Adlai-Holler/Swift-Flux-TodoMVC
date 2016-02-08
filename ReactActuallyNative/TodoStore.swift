@@ -13,7 +13,7 @@ import enum Result.NoError
 
 final class TodoStore {
     enum Event {
-        case Change(ManagedObjectContextChange)
+        case Change(modelChange: ManagedObjectContextChange?, errorMessage: String?)
     }
 
     private let changeObserver: Observer<Event, NoError>
@@ -49,7 +49,7 @@ final class TodoStore {
         switch action {
         case let .BeginEditingTitle(objectID):
             self.editingItemID = objectID
-            changeObserver.sendNext(.Change(ManagedObjectContextChange()))
+            changeObserver.sendNext(.Change(modelChange: ManagedObjectContextChange(), errorMessage: nil))
         case .Create:
             managedObjectContext.performBlock {
                 let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
@@ -67,7 +67,7 @@ final class TodoStore {
         case let .UpdateText(objectID, newTitle):
             managedObjectContext.performBlock {
                 let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
-                    let object = try self.managedObjectContext.existingObjectWithID(objectID)
+                    guard let object = try? self.managedObjectContext.existingObjectWithID(objectID) else { return }
                     var item = TodoItem(object: object)
                     item.title = newTitle
                     item.apply(object)
@@ -76,7 +76,7 @@ final class TodoStore {
                     }
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(change))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
                 }
             }
         case let .Delete(objectID):
@@ -90,7 +90,7 @@ final class TodoStore {
                     self.managedObjectContext.deleteObject(object)
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(change))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
                 }
             }
         case let .SetCompleted(objectID, completed):
@@ -102,7 +102,7 @@ final class TodoStore {
                     item.apply(object)
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(change))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
                 }
             }
         case .DeleteAllCompleted:
@@ -119,7 +119,7 @@ final class TodoStore {
                     }
                 }
                 if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(change))
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: "Failed to create your Todo Item."))
                 }
             }
         }
@@ -128,19 +128,25 @@ final class TodoStore {
 }
 
 extension NSManagedObjectContext {
-    func doWriteTransaction(@noescape body: () throws -> Void) throws -> ManagedObjectContextChange {
+    /// Throws if error, returns nil if no model change is necessary, returns change if one occurred.
+    func doWriteTransaction(@noescape body: () throws -> Void) throws -> ManagedObjectContextChange? {
         do {
             assert(!hasChanges, "Managed object context must be clean to do a write transaction.")
             try body()
             try obtainPermanentIDsForObjects(Array(insertedObjects))
             var change: ManagedObjectContextChange?
-            NSNotificationCenter.defaultCenter()
-                .rac_notifications(NSManagedObjectContextDidSaveNotification, object: self)
-                .take(1)
-                .startWithNext { change = ManagedObjectContextChange(notification: $0) }
-            try save()
-            return change!
-        } catch let e {
+            if hasChanges {
+                NSNotificationCenter.defaultCenter()
+                    .rac_notifications(NSManagedObjectContextDidSaveNotification, object: self)
+                    .take(1)
+                    .startWithNext { change = ManagedObjectContextChange(notification: $0) }
+                try save()
+                return change!
+            } else {
+                return nil
+            }
+        } catch let e as NSError {
+            NSLog("Error during write transaction: %@", e)
             rollback()
             throw e
         }

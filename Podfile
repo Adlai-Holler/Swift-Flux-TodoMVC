@@ -6,3 +6,4 @@ pod 'AsyncDisplayKit', :git => 'https://github.com/facebook/AsyncDisplayKit', :b
 pod 'ReactiveCocoa', '~> 4.0.1'
 pod 'ArrayDiff'
 pod 'pop'
+pod 'Whisper'
