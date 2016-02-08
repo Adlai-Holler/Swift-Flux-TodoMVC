@@ -18,19 +18,22 @@ struct TodoItem {
         case title
         case id
         case completed
+        case softDeleted
     }
 
-    let id: TodoItemID
+    var id: TodoItemID
     /// This is nil if the object was not created from an NSManagedObject.
     let objectID: NSManagedObjectID?
     var title: String?
     var completed: Bool
+    var softDeleted: Bool
 
     init(id: TodoItemID, title: String?, completed: Bool) {
         self.id = id
         self.objectID = nil
         self.title = title
         self.completed = completed
+        self.softDeleted = false
     }
 
     init(object: NSManagedObject) {
@@ -38,6 +41,7 @@ struct TodoItem {
         title = object.valueForKey(Property.title.rawValue) as! String?
         completed = object.valueForKey(Property.completed.rawValue) as! Bool
         id = (object.valueForKey(Property.id.rawValue) as! NSNumber).longLongValue
+        softDeleted = object.valueForKey(Property.softDeleted.rawValue) as! Bool
         objectID = object.objectID
     }
 
@@ -55,6 +59,9 @@ struct TodoItem {
         }
         if object.valueForKey(Property.completed.rawValue) as! Bool != completed {
             object.setValue(completed, forKey: Property.completed.rawValue)
+        }
+        if object.valueForKey(Property.softDeleted.rawValue) as! Bool != completed {
+            object.setValue(completed, forKey: Property.softDeleted.rawValue)
         }
     }
 }

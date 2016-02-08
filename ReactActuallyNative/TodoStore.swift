@@ -52,16 +52,26 @@ final class TodoStore {
             changeObserver.sendNext(.Change(modelChange: ManagedObjectContextChange(), errorMessage: nil))
         case .Create:
             managedObjectContext.performBlock {
+                let temporaryID = -TodoItem.maxId
+                TodoItem.incrementMaxID()
                 let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
-                    let item = TodoItem(id: TodoItem.maxId, title: nil, completed: false)
-                    TodoItem.incrementMaxID()
+                    let item = TodoItem(id: temporaryID, title: nil, completed: false)
                     let obj = NSEntityDescription.insertNewObjectForEntityForName(TodoItem.entityName, inManagedObjectContext: self.managedObjectContext)
                     item.apply(obj)
                     try self.managedObjectContext.obtainPermanentIDsForObjects([obj])
                     self.editingItemID = obj.objectID
                 }
-                if let change = changeOrNil {
-                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
+                guard let change = changeOrNil else { return }
+
+                self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
+                APIService.shared
+                    .create(temporaryID)
+                    .start { event in
+                        if let value = event.value {
+                            TodoAction.APICreateSucceeded(temporaryID: temporaryID, item: value).dispatch()
+                        } else if let error = event.error {
+                            TodoAction.APICreateFailed(temporaryID: temporaryID, error: error).dispatch()
+                        }
                 }
             }
         case let .UpdateText(objectID, newTitle):
@@ -108,14 +118,38 @@ final class TodoStore {
         case .DeleteAllCompleted:
             managedObjectContext.performBlock {
                 let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
-                    for item in self.getAll() where item.completed {
+                    for (var item) in self.getAll() where item.completed {
                         guard let object = try? self.managedObjectContext.existingObjectWithID(item.objectID!) else { continue }
-                        if object.objectID == self.editingItemID {
-                            /// There's currently a bug where the editing view will refuse to resign
-                            /// and we'll crash if we try to delete it.
-                            continue
-                        }
+
+                        item.softDeleted = true
+                        item.apply(object)
+                    }
+                }
+                if let change = changeOrNil {
+                    self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
+                }
+            }
+        case let .APICreateSucceeded(temporaryID, newItem):
+            managedObjectContext.performBlock {
+                let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
+                    for (var item) in self.getAll() where item.id == temporaryID {
+                        guard let obj = try? self.managedObjectContext.existingObjectWithID(item.objectID!) else { continue }
+                        item.id = newItem.id
+                        item.apply(obj)
+                        return
+                    }
+                }
+                guard let change = changeOrNil else { return }
+
+                self.changeObserver.sendNext(.Change(modelChange: change, errorMessage: nil))
+            }
+        case let .APICreateFailed(temporaryID, _):
+            managedObjectContext.performBlock {
+                let changeOrNil = try? self.managedObjectContext.doWriteTransaction {
+                    for item in self.getAll() where item.id == temporaryID {
+                        guard let object = try? self.managedObjectContext.existingObjectWithID(item.objectID!) else { return }
                         self.managedObjectContext.deleteObject(object)
+                        return
                     }
                 }
                 if let change = changeOrNil {

@@ -104,7 +104,9 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
         let state = self.state
         let nodes = state.items.map { item -> TodoNode in
             let state = TodoNode.State(item: item, editingTitle: state.editingItemID == item.objectID)
-            let node: TodoNode = nodeCache.nodeForKey("Todo Item Node \(item.id)", create: { key in
+            /// We can't use `node.id` here because the id will change
+            /// when the server assigns a permanent one.
+            let node: TodoNode = nodeCache.nodeForKey("Todo Item Node \(item.objectID!.URIRepresentation())", create: { key in
                 TodoNode(state: state)
             })
             node.setState(state)

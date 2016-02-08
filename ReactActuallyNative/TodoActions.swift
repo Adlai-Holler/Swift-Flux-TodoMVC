@@ -17,6 +17,9 @@ enum TodoAction {
     case SetCompleted(NSManagedObjectID, Bool)
     case DeleteAllCompleted
 
+    case APICreateSucceeded(temporaryID: TodoItemID, item: TodoItem)
+    case APICreateFailed(temporaryID: TodoItemID, error: APIService.Error)
+
     func dispatch() {
         dispatcher.dispatch(self)
     }
