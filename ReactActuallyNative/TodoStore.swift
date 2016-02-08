@@ -37,15 +37,12 @@ final class TodoStore {
 
     func getAll() -> [TodoItem] {
         let fr = NSFetchRequest(entityName: "TodoItem")
-        fr.sortDescriptors = [
-            NSSortDescriptor(key: TodoItem.Property.id.rawValue, ascending: true)
-        ]
         fr.returnsObjectsAsFaults = false
         var result: [TodoItem]?
         managedObjectContext.performBlockAndWait {
             result = try! (self.managedObjectContext.executeFetchRequest(fr) as! [NSManagedObject]).map(TodoItem.init)
         }
-        return result!
+        return result!.sort { abs($0.id) < abs($1.id) }
     }
 
     private func handleAction(action: TodoAction) {

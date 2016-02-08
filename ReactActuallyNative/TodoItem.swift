@@ -61,7 +61,8 @@ struct TodoItem {
 
 extension TodoItem {
     static var maxId: TodoItemID {
-        return TodoItemID(NSUserDefaults.standardUserDefaults().integerForKey("TodoItemMaxID"))
+        let storedValue = TodoItemID(NSUserDefaults.standardUserDefaults().integerForKey("TodoItemMaxID"))
+        return storedValue == 0 ? 1 : storedValue
     }
 
     static func incrementMaxID() {

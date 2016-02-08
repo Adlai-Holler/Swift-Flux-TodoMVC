@@ -31,9 +31,11 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     let deinitDisposable = CompositeDisposable()
 
     private let nodeCache = NSMapTable.strongToWeakObjectsMapTable()
+    /// The table data, as set on our private queue.
+    private var pendingTableData: [BasicSection<ASCellNode>] = []
+    /// The table data, as set on the main queue & vended to the ASTableNode.
     private var tableData: [BasicSection<ASCellNode>] = []
-    private var hasTableDataBeenQueried = false
-    private let tableDataLock = Lock()
+    private let hasTableDataBeenQueried = Atomic(false)
     init(store: TodoStore) {
         self.store = store
         queue = dispatch_queue_create("TodoViewController Queue", dispatch_queue_attr_make_with_qos_class(DISPATCH_QUEUE_SERIAL, QOS_CLASS_USER_INTERACTIVE, 0))
@@ -106,19 +108,24 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
     private func setState(newState: State) {
         state = newState
 
-		let oldData = tableDataLock.withCriticalScope {
-			tableData
-		}
+		let oldData = pendingTableData
         let newData = renderTableData(nodeCache)
 
         let diff = oldData.diffNested(newData)
         if diff.isEmpty { return }
 
-		let hasBeenQueried = tableDataLock.withCriticalScope { () -> Bool in
-			self.tableData = newData
-			return hasTableDataBeenQueried
-		}
+        self.pendingTableData = newData
+        let hasBeenQueried = hasTableDataBeenQueried.withValue { isQueried -> Bool in
+            if !isQueried {
+                tableData = newData
+            }
+            return isQueried
+        }
 		if !hasBeenQueried { return }
+
+        if diff.itemDiffs[0]!.removedIndexes.count > diff.itemDiffs[0]!.insertedIndexes.count {
+
+        }
 
         let deletedIndexPaths = diff.itemDiffs[0]?.removedIndexes.indexPathsInSection(0)
         dispatch_async(dispatch_get_main_queue()) {
@@ -128,9 +135,7 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
                 self.forceResignIfFirstResponderIsAtIndexPath(deletedIndexPaths)
             }
             tableView.beginUpdates()
-			self.tableDataLock.withCriticalScope {
-				self.tableData = newData
-			}
+            self.tableData = newData
             diff.applyToTableView(tableView, rowAnimation: .Automatic)
             tableView.endUpdates()
         }
@@ -154,16 +159,8 @@ final class TodoViewController: ASViewController, ASTableDelegate, ASTableDataSo
 
     // MARK: Table View Data Source Methods
 
-    func tableViewLockDataSource(tableView: ASTableView) {
-        tableDataLock.lock()
-        hasTableDataBeenQueried = true
-    }
-
-    func tableViewUnlockDataSource(tableView: ASTableView) {
-        tableDataLock.unlock()
-    }
-
     func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+        hasTableDataBeenQueried.value = true
         return tableData.count
     }
 
